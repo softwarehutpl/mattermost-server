@@ -1,19 +1,5 @@
-version: '3.4'
+version: "3.4"
 services:
-  mysql:
-    image: "mysql:5.7"
-    restart: always
-    networks:
-      - mm-test
-    environment:
-      MYSQL_ROOT_HOST: "%"
-      MYSQL_ROOT_PASSWORD: mostest
-      MYSQL_PASSWORD: mostest
-      MYSQL_USER: mmuser
-      MYSQL_DATABASE: mattermost_test
-    tmpfs: /var/lib/mysql
-    volumes:
-     - "./docker/mysql.conf.d:/etc/mysql/conf.d"
   postgres:
     image: "postgres:9.4"
     restart: always
@@ -69,14 +55,13 @@ services:
     networks:
       - mm-test
     depends_on:
-      - mysql
       - postgres
       - minio
       - inbucket
       - openldap
       - elasticsearch
       - redis
-    command: postgres:5432 mysql:3306 minio:9000 inbucket:10080 openldap:389 elasticsearch:9200 redis:6379
+    command: postgres:5432 minio:9000 inbucket:10080 openldap:389 elasticsearch:9200 redis:6379
 
 networks:
   mm-test:

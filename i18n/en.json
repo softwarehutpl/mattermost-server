@@ -248,6 +248,10 @@
     "translation": "One of the provided users does not exist"
   },
   {
+    "id": "api.channel.delete_channel.permissions",
+    "translation": "{{.User}} has no permission to delete channel '{{.Channel}}'"
+  },
+  {
     "id": "api.channel.delete_channel.archived",
     "translation": "%v archived the channel."
   },

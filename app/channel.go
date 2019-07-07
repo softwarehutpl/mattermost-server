@@ -20,8 +20,8 @@ import (
 //
 func (a *App) CreateDefaultChannels(teamID string) ([]*model.Channel, *model.AppError) {
 	displayNames := map[string]string{
-		"town-square": utils.T("api.channel.create_default_channels.town_square"),
-		"off-topic":   utils.T("api.channel.create_default_channels.off_topic"),
+		"general": "general",
+		"random":  "random",
 	}
 	channels := []*model.Channel{}
 	defaultChannelNames := a.DefaultChannelNames()
@@ -45,12 +45,12 @@ func (a *App) CreateDefaultChannels(teamID string) ([]*model.Channel, *model.App
 //	['town-square', 'game-of-thrones', 'wow']
 //
 func (a *App) DefaultChannelNames() []string {
-	names := []string{"town-square"}
+	names := []string{"general"}
 
 	if len(a.Config().TeamSettings.ExperimentalDefaultChannels) == 0 {
-		names = append(names, "off-topic")
+		names = append(names, "random")
 	} else {
-		seenChannels := map[string]bool{"town-square": true}
+		seenChannels := map[string]bool{"general": true}
 		for _, channelName := range a.Config().TeamSettings.ExperimentalDefaultChannels {
 			if !seenChannels[channelName] {
 				names = append(names, channelName)
@@ -793,6 +793,19 @@ func (a *App) UpdateChannelMemberNotifyProps(data map[string]string, channelId s
 }
 
 func (a *App) DeleteChannel(channel *model.Channel, userId string) *model.AppError {
+	var user *model.User
+	if userId != "" {
+		var err *model.AppError
+		user, err = a.Srv.Store.User().Get(userId)
+		if err != nil {
+			return err
+		}
+		if !strings.Contains(user.Roles, "system_admin") {
+			err := model.NewAppError("deleteChannel", "api.channel.delete_channel.permissions", map[string]interface{}{"Channel": channel.DisplayName, "User": user.Username}, "", http.StatusBadRequest)
+			return err
+		}
+	}
+
 	ihc := make(chan store.StoreResult, 1)
 	ohc := make(chan store.StoreResult, 1)
 
@@ -808,14 +821,7 @@ func (a *App) DeleteChannel(channel *model.Channel, userId string) *model.AppErr
 		close(ohc)
 	}()
 
-	var user *model.User
-	if userId != "" {
-		var err *model.AppError
-		user, err = a.Srv.Store.User().Get(userId)
-		if err != nil {
-			return err
-		}
-	}
+	mlog.Info(fmt.Sprintf("User: %s", user.Username))
 
 	ihcresult := <-ihc
 	if ihcresult.Err != nil {
